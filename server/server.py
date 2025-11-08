@@ -8,8 +8,9 @@ DATA_FILE = "/app/data/state.json"
 os.makedirs("/app/data", exist_ok=True)
 # inicializa storage
 if not os.path.exists(DATA_FILE):
+    # Adicionando a lista de 'messages' na inicialização
     with open(DATA_FILE, "w") as f:
-        json.dump({"users": [], "channels": [], "messages": []}, f)
+        json.dump({"users": [], "channels": [], "messages": []}, f) 
 
 def load_state():
     with open(DATA_FILE, "r") as f:
@@ -79,6 +80,7 @@ while True:
             rep.send_json({"service":"channel","data":{"status":"sucesso","timestamp":now()}})
 
     elif svc == "channels":
+        # Corrigido: 'users' para 'channels' na resposta
         rep.send_json({"service":"channels","data":{"timestamp":now(),"channels":[c["channel"] for c in state["channels"]]}})
 
     # --- Lógica da Parte 2 (PUBLISH) ---

@@ -1,23 +1,29 @@
 version: "3.9"
 
 services:
+  # Configuração para o Proxy Pub/Sub
   proxy:
     build: ./proxy
-    container_name: proxy
+    image: prosd/proxy-pubsub
+    container_name: prosd-proxy
     ports:
-      - "5557:5557"  # XSUB (entrada)
-      - "5558:5558"  # XPUB (saída)
-    restart: unless-stopped
+      # XSUB: Entrada para Publishers (Bot)
+      - "5557:5557"
+      # XPUB: Saída para Subscribers (Cliente, Monitor)
+      - "5558:5558"
+    networks:
+      - prosd_network
+    # O 'proxy-pub.py' deve ser o ENTRYPOINT ou CMD
+    command: ["python", "proxy-pub.py"]
 
   broker:
     build: ./broker
-    container_name: broker
+    image: prosd/broker
+    container_name: prosd-broker
     ports:
-      - "5555:5555"  # REQ/REP frontend
-      - "5556:5556"  # ROUTER backend
-    depends_on:
-      - proxy
-    restart: unless-stopped
+      - "5555:5555" # Porta Req/Rep
+    networks:
+      - prosd_network
 
   server:
     build: ./server
