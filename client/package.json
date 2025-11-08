@@ -1,0 +1,8 @@
+{
+  "name": "client_cli",
+  "version": "1.0.0",
+  "main": "client.js",
+  "dependencies": {
+    "zeromq": "^6.0.0-beta.6"
+  }
+}

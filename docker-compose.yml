@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+  proxy:
+    build: ./proxy
+    container_name: proxy
+    ports:
+      - "5557:5557"  # XSUB (entrada)
+      - "5558:5558"  # XPUB (saída)
+    restart: unless-stopped
+
+  broker:
+    build: ./broker
+    container_name: broker
+    ports:
+      - "5555:5555"  # REQ/REP frontend
+      - "5556:5556"  # ROUTER backend
+    depends_on:
+      - proxy
+    restart: unless-stopped
+
+  server:
+    build: ./server
+    environment:
+      - SERVER_NAME=Server1
+    volumes:
+      - ./server/data:/app/data
+    depends_on:
+      - broker
+      - proxy
+    restart: unless-stopped
+
+  bot:
+    build: ./bot
+    container_name: bot_go
+    depends_on:
+      - broker
+      - proxy
+    restart: unless-stopped
+
+  client_cli:
+    build: ./client
+    stdin_open: true
+    tty: true
+    depends_on:
+      - broker
+      - proxy
+    restart: unless-stopped
+
+  monitor:
+    build: ./monitor
+    container_name: monitor
+    ports:
+      - "5000:5000"
+    depends_on:
+      - proxy
+    restart: unless-stopped
