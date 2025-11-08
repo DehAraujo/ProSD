@@ -11,10 +11,9 @@ services:
       - "5557:5557"
       # XPUB: Saída para Subscribers (Cliente, Monitor)
       - "5558:5558"
-    networks:
-      - prosd_network
-    # O 'proxy-pub.py' deve ser o ENTRYPOINT ou CMD
     command: ["python", "proxy-pub.py"]
+    networks: # Apenas referenciando a rede
+      - prosd_network
 
   broker:
     build: ./broker
@@ -22,7 +21,9 @@ services:
     container_name: prosd-broker
     ports:
       - "5555:5555" # Porta Req/Rep
-    networks:
+    depends_on:
+      - proxy
+    networks: # Apenas referenciando a rede
       - prosd_network
 
   server:
@@ -35,6 +36,8 @@ services:
       - broker
       - proxy
     restart: unless-stopped
+    networks: # Apenas referenciando a rede
+      - prosd_network
 
   bot:
     build: ./bot
@@ -43,6 +46,8 @@ services:
       - broker
       - proxy
     restart: unless-stopped
+    networks: # Apenas referenciando a rede
+      - prosd_network
 
   client_cli:
     build: ./client
@@ -52,6 +57,8 @@ services:
       - broker
       - proxy
     restart: unless-stopped
+    networks: # Apenas referenciando a rede
+      - prosd_network
 
   monitor:
     build: ./monitor
@@ -61,3 +68,10 @@ services:
     depends_on:
       - proxy
     restart: unless-stopped
+    networks: # Apenas referenciando a rede
+      - prosd_network
+
+# --- SEÇÃO GLOBAL DE DEFINIÇÃO DE REDES (Onde o driver é especificado) ---
+networks:
+  prosd_network:
+    driver: bridge # O Docker cria uma rede chamada prosd_network
