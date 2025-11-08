@@ -1,14 +1,202 @@
 {
   "users": [
     {
+      "user": "UserTesteFinal",
+      "timestamp": "2025-11-08T14:56:57.775Z"
+    },
+    {
+      "user": "NovoUsuario",
+      "timestamp": "2025-11-08T15:08:37.679Z"
+    },
+    {
+      "user": "UserNovoSucesso",
+      "timestamp": "2025-11-08T15:23:59.230Z"
+    },
+    {
+      "user": "Alice",
+      "timestamp": "2025-11-08T15:38:21.142Z"
+    },
+    {
+      "user": "Bob",
+      "timestamp": "2025-11-08T15:40:17.550Z"
+    },
+    {
+      "user": "UserTeste",
+      "timestamp": "2025-11-08T15:46:38.256Z"
+    },
+    {
       "user": "Deise",
-      "timestamp": "2025-11-06T18:00:34.028Z"
+      "timestamp": "2025-11-08T15:48:50.107Z"
+    },
+    {
+      "user": "Laura",
+      "timestamp": "2025-11-08T15:51:33.408Z"
+    },
+    {
+      "user": "Marcela",
+      "timestamp": "2025-11-08T15:51:57.846Z"
+    },
+    {
+      "user": "TestePersistencia",
+      "timestamp": "2025-11-08T15:56:23.182Z"
+    },
+    {
+      "user": "Anderson",
+      "timestamp": "2025-11-08T16:09:35.214Z"
+    },
+    {
+      "user": "Maria",
+      "timestamp": "2025-11-08T16:09:58.542Z"
+    },
+    {
+      "user": "Paula",
+      "timestamp": "2025-11-08T16:16:10.627Z"
+    },
+    {
+      "user": "Val",
+      "timestamp": "2025-11-08T16:16:40.981Z"
+    },
+    {
+      "user": "Lucas",
+      "timestamp": "2025-11-08T16:20:07.519Z"
+    },
+    {
+      "user": "Yume",
+      "timestamp": "2025-11-08T16:22:02.987Z"
+    },
+    {
+      "user": "Ursula",
+      "timestamp": "2025-11-08T16:37:01.446Z"
+    },
+    {
+      "user": "Beto",
+      "timestamp": "2025-11-08T16:37:06.332Z"
+    },
+    {
+      "user": "Flavia",
+      "timestamp": "2025-11-08T16:37:11.529Z"
+    },
+    {
+      "user": "Sara",
+      "timestamp": "2025-11-08T16:53:09.670Z"
+    },
+    {
+      "user": "Flora",
+      "timestamp": "2025-11-08T16:53:20.324Z"
+    },
+    {
+      "user": "Link",
+      "timestamp": "2025-11-08T16:53:31.516Z"
+    },
+    {
+      "user": "Paulo",
+      "timestamp": "2025-11-08T16:58:20.272Z"
+    },
+    {
+      "user": "Marilia",
+      "timestamp": "2025-11-08T17:01:52.432Z"
+    },
+    {
+      "user": "Luiz",
+      "timestamp": "2025-11-08T17:09:33.953Z"
     }
   ],
   "channels": [
     {
-      "channel": "geral",
-      "timestamp": "2025-11-06T18:02:04.398Z"
+      "channel": "CanalFinal",
+      "timestamp": "2025-11-08T14:57:07.933Z"
+    },
+    {
+      "channel": "CanalTeste",
+      "timestamp": "2025-11-08T15:46:45.682Z"
+    },
+    {
+      "channel": "TesteChannel",
+      "timestamp": "2025-11-08T15:49:54.326Z"
+    },
+    {
+      "channel": "CanalEstavel",
+      "timestamp": "2025-11-08T16:15:17.654Z"
+    },
+    {
+      "channel": "Dorama",
+      "timestamp": "2025-11-08T16:54:20.536Z"
+    }
+  ],
+  "messages": [
+    {
+      "channel": "CanalFinal",
+      "user": "UserTesteFinal",
+      "content": "Teste FINAL de SUCESSO!",
+      "timestamp": "2025-11-08T14:57:30.742Z"
+    },
+    {
+      "channel": "CanalFinal",
+      "user": "NovoUsuario",
+      "content": "Teste FINAL de SUCESSO!",
+      "timestamp": "2025-11-08T15:08:48.369Z"
+    },
+    {
+      "channel": "CanalFinal",
+      "user": "UserNovoSucesso",
+      "content": "Mensagem de SUCESSO Final!",
+      "timestamp": "2025-11-08T15:24:10.753Z"
+    },
+    {
+      "channel": "CanalFinal",
+      "user": "UserNovoSucesso",
+      "content": "Deise!",
+      "timestamp": "2025-11-08T15:24:27.386Z"
+    },
+    {
+      "channel": "CanalFinal",
+      "user": "UserNovoSucesso",
+      "content": "Deise!",
+      "timestamp": "2025-11-08T15:24:39.349Z"
+    },
+    {
+      "channel": "CanalTeste",
+      "user": "UserTeste",
+      "content": "Minha primeira publicacao!",
+      "timestamp": "2025-11-08T15:47:04.150Z"
+    },
+    {
+      "channel": "CanalFinal",
+      "user": "Deise",
+      "content": "Minha primeira publicacao!",
+      "timestamp": "2025-11-08T15:53:00.658Z"
+    },
+    {
+      "channel": "CanalFinal",
+      "user": "Laura",
+      "content": "Ol\u00e1 pessoal, sou Laura e voc\u00eas?",
+      "timestamp": "2025-11-08T15:53:59.175Z"
+    },
+    {
+      "channel": "CanalFinal",
+      "user": "Marcela",
+      "content": "Ol\u00e1, Laura! Sou Marcela",
+      "timestamp": "2025-11-08T15:54:40.955Z"
+    },
+    {
+      "channel": "CanalFinal",
+      "user": "Laura",
+      "content": "Ol\u00e1. Tem alguma MAria??]",
+      "timestamp": "2025-11-08T16:05:19.935Z"
+    },
+    {
+      "type": "p2p",
+      "src": "Maria",
+      "dst": "Maria",
+      "content": "Mensagem privada de Anderson para voc\u00ea!",
+      "timestamp": "2025-11-08T16:12:27.653Z"
+    },
+    {
+      "type": "p2p",
+      "src": "Maria",
+      "dst": "Maria",
+      "content": "Mensagem privada de Anderson para voc\u00ea!",
+      "timestamp": "2025-11-08T16:15:17.654Z"
     }
   ]
 }

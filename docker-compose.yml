@@ -6,13 +6,15 @@ services:
     build: ./proxy
     image: prosd/proxy-pubsub
     container_name: prosd-proxy
+    environment:  # ⬅️ Este deve estar alinhado com 'build' e 'image'
+      - PYTHONUNBUFFERED=1
     ports:
       # XSUB: Entrada para Publishers (Bot)
       - "5557:5557"
       # XPUB: Saída para Subscribers (Cliente, Monitor)
       - "5558:5558"
     command: ["python", "proxy-pub.py"]
-    networks: # Apenas referenciando a rede
+    networks:
       - prosd_network
 
   broker:
