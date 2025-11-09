@@ -1,4 +1,5 @@
 // client/client.js
+
 const zmq = require("zeromq");
 const readline = require("readline");
 
@@ -6,7 +7,6 @@ let subscribed_channels = [];
 let username = null;
 
 async function main() {
-    // --- SOCKETS ---
     const sock = new zmq.Request();
     await sock.connect("tcp://broker:5555");
     console.log("💬 Cliente conectado ao broker (tcp://broker:5555)");
@@ -15,35 +15,36 @@ async function main() {
     await sub_sock.connect("tcp://proxy:5558");
     console.log("📣 Cliente conectado ao proxy (tcp://proxy:5558) para receber mensagens");
 
-    // --- RECEBIMENTO DE MENSAGENS ---
+    // --- Loop de recebimento de mensagens (SUB) ---
     async function receiveMessages() {
         for await (const [topic, message] of sub_sock) {
             const topicName = topic.toString();
             try {
                 const msg = JSON.parse(message.toString());
                 if (msg.type === "p2p") {
-                    console.log(`\n[💌 PRIVADO DE ${msg.src}] ${msg.content}`);
+                    console.log(`\n📩 [PRIVADO DE ${msg.src}] ${msg.content}`);
                 } else if (msg.type === "publish") {
-                    console.log(`\n[📢 ${topicName}] ${msg.user}: ${msg.content}`);
+                    console.log(`\n🌐 [${topicName}] ${msg.user}: ${msg.content}`);
                 } else {
-                    console.log(`\n[RECEBIDO ${topicName}] ${message.toString()}`);
+                    console.log(`\n📦 [${topicName}] Mensagem: ${message.toString()}`);
                 }
+                process.stdout.write("> ");
             } catch {
-                console.log(`\n[RECEBIDO ${topicName}] ${message.toString()}`);
+                console.log(`\n⚠️ [${topicName}] Mensagem bruta: ${message.toString()}`);
+                process.stdout.write("> ");
             }
-            process.stdout.write("> ");
         }
     }
-    receiveMessages().catch(err => console.error("Erro no loop SUB:", err));
+    receiveMessages().catch(err => { console.error("Erro no loop SUB:", err); process.exit(1); });
 
-    // --- INTERFACE CLI ---
+    // --- Interface CLI ---
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
-    async function handleCommand(line) {
+    const prompt = () => rl.question("> ", async (line) => {
         const parts = line.trim().split(" ");
         const cmd = parts[0]?.toLowerCase() || "";
 
-        // === COMANDOS ===
+        // --- SAIR ---
         if (cmd === "exit" || cmd === "quit") {
             console.log("👋 Saindo...");
             rl.close();
@@ -53,87 +54,98 @@ async function main() {
         // --- LOGIN ---
         else if (cmd === "login") {
             const user = parts[1];
-            if (!user) {
-                console.log("Uso: login <nome>");
-                return;
-            }
+            if (!user) { console.log("Uso: login <nome>"); return prompt(); }
 
-            // Envia tentativa de login
+            // Tenta logar
             const msg = { service: "login", data: { user, timestamp: new Date().toISOString() } };
             await sock.send(JSON.stringify(msg));
             const [reply] = await sock.receive();
             const replyObj = JSON.parse(reply.toString());
 
-            // --- Tratamento do login ---
             if (replyObj.data.status === "sucesso") {
                 username = user;
-                if (!subscribed_channels.includes(username)) {
-                    sub_sock.subscribe(username);
-                    subscribed_channels.push(username);
-                }
-                console.log(`✅ Logado como **${username}** com sucesso!`);
-            } else if (replyObj.data.status === "ja_logado") {
+                sub_sock.subscribe(username);
+                subscribed_channels.push(username);
+                console.log(`✅ Usuário **${username}** logado com sucesso!`);
+            } 
+            else if (replyObj.data.status === "ja_logado") {
                 username = user;
-                console.log(`⚠️ Usuário **${username}** já estava logado. Reconectado.`);
-                if (!subscribed_channels.includes(username)) {
-                    sub_sock.subscribe(username);
-                    subscribed_channels.push(username);
-                }
-            } else {
-                console.log(`❌ Erro no login: ${replyObj.data.description}`);
+                console.log(`✅ Usuário **${username}** já estava logado.`);
+            } 
+            else if (replyObj.data.status === "erro" && replyObj.data.description.includes("exists")) {
+                username = user;
+                console.log(`⚠️ Usuário **${username}** já existe. Logado como ele mesmo.`);
+            }
+            else {
+                console.log("❌ Erro ao logar:", replyObj.data.description);
             }
         }
 
-        // --- VER LOGIN ATUAL ---
-        else if (cmd === "whoami") {
-            if (username) console.log(`👤 Usuário atual: **${username}**`);
-            else console.log("⚠️ Nenhum usuário logado.");
+        // --- MOSTRAR LOGIN ATUAL ---
+        else if (cmd === "logged") {
+            if (username) console.log(`👤 Logado como: ${username}`);
+            else console.log("❌ Nenhum usuário logado.");
         }
 
-        // --- LISTAR CANAIS DISPONÍVEIS ---
-        else if (cmd === "channels") {
-            const msg = { service: "channels", data: { timestamp: new Date().toISOString() } };
-            await sock.send(JSON.stringify(msg));
+        // --- LISTAR USUÁRIOS ---
+        else if (cmd === "users") {
+            await sock.send(JSON.stringify({ service: "users", data: { timestamp: new Date().toISOString() } }));
             const [reply] = await sock.receive();
-            const res = JSON.parse(reply.toString());
-            console.log("📜 Canais disponíveis:", res.data.channels || res);
+            console.log("👥 Usuários:", JSON.parse(reply.toString()).data.users.join(", "));
         }
 
-        // --- LISTAR CANAIS INSCRITOS ---
-        else if (cmd === "mychannels") {
-            if (subscribed_channels.length === 0) console.log("❕ Você não está inscrito em nenhum canal.");
-            else console.log("📦 Canais inscritos:", subscribed_channels.join(", "));
+        // --- LISTAR CANAIS ---
+        else if (cmd === "channels") {
+            await sock.send(JSON.stringify({ service: "channels", data: { timestamp: new Date().toISOString() } }));
+            const [reply] = await sock.receive();
+            console.log("📡 Canais disponíveis:", JSON.parse(reply.toString()).data.channels.join(", "));
         }
 
-        // --- INFORMAÇÕES DE UM CANAL ---
+        // --- CRIAR CANAL ---
         else if (cmd === "channel") {
             const ch = parts[1];
-            if (!ch) { console.log("Uso: channel <nome>"); return; }
+            if (!ch) { console.log("Uso: channel <nome>"); return prompt(); }
+
             const msg = { service: "channel", data: { channel: ch, timestamp: new Date().toISOString() } };
             await sock.send(JSON.stringify(msg));
             const [reply] = await sock.receive();
-            console.log("📋 Info do canal:", JSON.parse(reply.toString()));
+            const obj = JSON.parse(reply.toString());
+            if (obj.data.status === "sucesso")
+                console.log(`✅ Canal **${ch}** criado com sucesso.`);
+            else
+                console.log(`❌ Erro ao criar canal: ${obj.data.description}`);
         }
 
-        // --- INSCRIÇÃO EM CANAL ---
+        // --- SUBSCRIBE --- ✅ Versão corrigida
         else if (cmd === "subscribe") {
             const ch = parts[1];
-            if (!ch) { console.log("Uso: subscribe <canal>"); return; }
-            if (!username) { console.log("⚠️ Faça login antes de se inscrever."); return; }
-            if (subscribed_channels.includes(ch)) { console.log(`Já está inscrito em **${ch}**`); return; }
+            if (!ch) { 
+                console.log("Uso: subscribe <canal>"); 
+                return prompt(); 
+            }
+            if (!username) { 
+                console.log("Erro: Faça login antes de se inscrever."); 
+                return prompt(); 
+            }
+            if (subscribed_channels.includes(ch)) { 
+                console.log(`Já está inscrito em **${ch}**`); 
+                return prompt(); 
+            }
 
-            // Verifica se canal existe
-            await sock.send(JSON.stringify({ service: "check_channel", data: { channel: ch } }));
+            // 🔍 1. Verifica com o servidor se o canal existe
+            const checkMsg = { service: "check_channel", data: { channel: ch } };
+            await sock.send(JSON.stringify(checkMsg));
             const [checkReply] = await sock.receive();
             const checkObj = JSON.parse(checkReply.toString());
 
             if (checkObj.data.status !== "OK") {
-                console.log(`❌ Canal **${ch}** não existe.`);
-                return;
+                console.log(`❌ Canal '${ch}' não existe. Crie-o antes de se inscrever.`);
+                return prompt();
             }
 
-            // Solicita inscrição
-            await sock.send(JSON.stringify({ service: "subscribe", data: { channel: ch, user: username } }));
+            // ✅ 2. Solicita ao servidor o subscribe (apenas para registro)
+            const subMsg = { service: "subscribe", data: { channel: ch, user: username } };
+            await sock.send(JSON.stringify(subMsg));
             const [subReply] = await sock.receive();
             const subObj = JSON.parse(subReply.toString());
 
@@ -142,83 +154,96 @@ async function main() {
                 subscribed_channels.push(ch);
                 console.log(`✅ Inscrito com sucesso no canal **${ch}**`);
             } else {
-                console.log(`Erro ao inscrever: ${subObj.data.description}`);
+                console.log(`❌ Erro: ${subObj.data.description}`);
             }
         }
 
-        // --- SAIR DO CANAL ---
+        // --- DESINSCRER-SE ---
         else if (cmd === "unsubscribe") {
             const ch = parts[1];
-            if (!ch) { console.log("Uso: unsubscribe <canal>"); return; }
-            if (!username) { console.log("⚠️ Faça login antes de sair de canais."); return; }
+            if (!ch) { console.log("Uso: unsubscribe <canal>"); return prompt(); }
+            if (!username) { console.log("Erro: Faça login antes de se desinscrever."); return prompt(); }
             if (!subscribed_channels.includes(ch)) {
                 console.log(`Você não está inscrito em **${ch}**`);
-                return;
+                return prompt();
             }
 
-            await sock.send(JSON.stringify({ service: "unsubscribe", data: { channel: ch, user: username } }));
-            const [reply] = await sock.receive();
-            const replyObj = JSON.parse(reply.toString());
-            if (replyObj.data.status === "sucesso") {
-                sub_sock.unsubscribe(ch);
-                subscribed_channels = subscribed_channels.filter(c => c !== ch);
-                console.log(`🚪 Saiu do canal **${ch}** com sucesso.`);
-            } else {
-                console.log(`Erro ao sair: ${replyObj.data.description}`);
-            }
+            sub_sock.unsubscribe(ch);
+            subscribed_channels = subscribed_channels.filter(c => c !== ch);
+            console.log(`🚪 Saiu do canal **${ch}** com sucesso.`);
         }
 
-        // --- PUBLICAR MENSAGEM ---
-        else if (cmd === "post") {
-            if (!username) { console.log("⚠️ Faça login antes de postar."); return; }
+        // --- POST ---
+        else if (cmd === "publisher") {
+            if (!username) { console.log("Erro: Faça login antes de postar."); return prompt(); }
             const ch = parts[1];
             const content = parts.slice(2).join(" ");
-            if (!ch || !content) { console.log("Uso: post <canal> <mensagem>"); return; }
+            if (!ch || !content) { console.log("Uso: post <canal> <mensagem>"); return prompt(); }
 
-            const msg = { service: "publish", data: { channel: ch, user: username, content, timestamp: new Date().toISOString() } };
+            const msg = { 
+                service: "publish", 
+                data: { 
+                    channel: ch, 
+                    user: username, 
+                    content, 
+                    timestamp: new Date().toISOString() 
+                } 
+            };
             await sock.send(JSON.stringify(msg));
             const [reply] = await sock.receive();
-            console.log("📨 Servidor:", JSON.parse(reply.toString()));
+            const resp = JSON.parse(reply.toString());
+            if (resp.data.status === "sucesso")
+                console.log(`📤 Mensagem enviada para ${ch}`);
+            else
+                console.log(`❌ Erro ao enviar: ${resp.data.description}`);
         }
 
-        // --- ENVIAR MENSAGEM PRIVADA ---
+        // --- MENSAGEM PRIVADA ---
         else if (cmd === "msg") {
-            if (!username) { console.log("⚠️ Faça login antes de enviar mensagens."); return; }
+            if (!username) { console.log("Erro: Faça login antes de enviar mensagens."); return prompt(); }
             const dst = parts[1];
             const content = parts.slice(2).join(" ");
-            if (!dst || !content) { console.log("Uso: msg <destinatario> <mensagem>"); return; }
+            if (!dst || !content) { console.log("Uso: msg <destinatario> <mensagem>"); return prompt(); }
 
-            const msg = { service: "message", data: { src: username, dst, message: content, timestamp: new Date().toISOString() } };
+            const msg = { 
+                service: "message", 
+                data: { src: username, dst, message: content, timestamp: new Date().toISOString() } 
+            };
             await sock.send(JSON.stringify(msg));
             const [reply] = await sock.receive();
-            console.log("📨 Servidor:", JSON.parse(reply.toString()));
+            console.log("REPLY:", JSON.parse(reply.toString()));
         }
 
+        // --- MEUS CANAIS ---
+        else if (cmd === "mychannels") {
+            if (subscribed_channels.length === 0)
+                console.log("Você não está inscrita em nenhum canal.");
+            else
+                console.log("📡 Canais inscritos:", subscribed_channels.join(", "));
+        }
+
+        // --- AJUDA ---
         else {
             console.log(`
-🧭 Comandos disponíveis:
-  login <nome>         → Fazer login
-  whoami               → Mostrar usuário logado
-  channels             → Listar canais disponíveis
-  mychannels           → Mostrar canais inscritos
-  channel <nome>       → Info de um canal
-  subscribe <canal>    → Entrar em um canal existente
-  unsubscribe <canal>  → Sair de um canal
-  post <canal> <msg>   → Enviar mensagem pública
-  msg <user> <msg>     → Enviar mensagem privada
-  exit                 → Sair
-            `);
+Comandos disponíveis:
+🟢 login <nome>          → Fazer login
+👤 logged                → Mostrar login atual
+👥 users                 → Listar usuários logados
+📡 channels              → Listar canais disponíveis
+➕ channel <nome>        → Criar um novo canal
+🔔 subscribe <canal>     → Entrar em um canal existente
+🚪 unsubscribe <canal>   → Sair de um canal
+💬 post <canal> <msg>    → Enviar mensagem para um canal
+📨 msg <dest> <msg>      → Enviar mensagem privada
+📋 mychannels            → Ver canais onde está inscrita
+❌ exit / quit           → Sair
+`);
         }
-    }
 
-    // --- LOOP CLI ---
-    rl.on("line", async (line) => {
-        try { await handleCommand(line); }
-        catch (err) { console.error("❌ Erro:", err); }
-        process.stdout.write("> ");
+        prompt();
     });
 
-    process.stdout.write("> ");
+    prompt();
 }
 
 main().catch(err => { console.error(err); process.exit(1); });
